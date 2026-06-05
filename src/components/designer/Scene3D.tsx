@@ -1,6 +1,6 @@
 import { Canvas, useThree } from "@react-three/fiber";
-import { OrbitControls, Grid, Environment, Sky, Html, OrthographicCamera, PerspectiveCamera } from "@react-three/drei";
-import { useEffect, useMemo } from "react";
+import { OrbitControls, Grid, Environment, Sky, Html, OrthographicCamera, PerspectiveCamera, TransformControls } from "@react-three/drei";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useScene, type SceneObject } from "@/lib/scene-store";
 import * as THREE from "three";
 
