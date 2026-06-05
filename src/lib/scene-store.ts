@@ -305,6 +305,7 @@ const initialSettings: SceneSettings = {
   timeOfDay: 13, fog: 0.0, groundColor: "#2a3a2a",
   snapEnabled: true, snapSize: 0.5, showDimensions: true,
   showGrid: true, viewMode: "3d", screenshotTick: 0,
+  gizmoMode: "translate",
 };
 
 const snap = (v: number, s: number) => Math.round(v / s) * s;
