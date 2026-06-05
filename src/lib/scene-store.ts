@@ -28,6 +28,7 @@ export type PresetKey =
   | "mosque" | "hotel" | "cafe" | "gym";
 
 export type ViewMode = "3d" | "top" | "front" | "side";
+export type GizmoMode = "translate" | "rotate" | "scale";
 
 export interface SceneSettings {
   timeOfDay: number; // 0-24
@@ -39,6 +40,7 @@ export interface SceneSettings {
   showGrid: boolean;
   viewMode: ViewMode;
   screenshotTick: number;
+  gizmoMode: GizmoMode;
 }
 
 interface History { past: SceneObject[][]; future: SceneObject[][] }
@@ -50,6 +52,7 @@ interface SceneState {
   settings: SceneSettings;
   history: History;
   add: (kind: ObjectKind) => void;
+  addCustom: (opts: { label: string; size: [number, number, number]; color: string; material?: SceneObject["material"]; kind?: ObjectKind }) => void;
   remove: (id: string) => void;
   duplicate: (id: string) => void;
   select: (id: string | null) => void;
@@ -303,6 +306,7 @@ const initialSettings: SceneSettings = {
   timeOfDay: 13, fog: 0.0, groundColor: "#2a3a2a",
   snapEnabled: true, snapSize: 0.5, showDimensions: true,
   showGrid: true, viewMode: "3d", screenshotTick: 0,
+  gizmoMode: "translate",
 };
 
 const snap = (v: number, s: number) => Math.round(v / s) * s;
@@ -321,6 +325,14 @@ export const useScene = create<SceneState>((set, get) => {
     add: (kind) => {
       const def = defaults[kind];
       const obj: SceneObject = { id: uid(), ...def, position: [0, def.size[1] / 2, 0] };
+      push([...get().objects, obj]);
+      set({ selectedId: obj.id });
+    },
+    addCustom: ({ label, size, color, material = "matte", kind = "furniture" }) => {
+      const obj: SceneObject = {
+        id: uid(), kind, label: label || "Custom",
+        position: [0, size[1] / 2, 0], size, rotationY: 0, color, material, costPerUnit: 150,
+      };
       push([...get().objects, obj]);
       set({ selectedId: obj.id });
     },
