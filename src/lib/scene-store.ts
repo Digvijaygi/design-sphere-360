@@ -28,6 +28,7 @@ export type PresetKey =
   | "mosque" | "hotel" | "cafe" | "gym";
 
 export type ViewMode = "3d" | "top" | "front" | "side";
+export type GizmoMode = "translate" | "rotate" | "scale";
 
 export interface SceneSettings {
   timeOfDay: number; // 0-24
@@ -39,6 +40,7 @@ export interface SceneSettings {
   showGrid: boolean;
   viewMode: ViewMode;
   screenshotTick: number;
+  gizmoMode: GizmoMode;
 }
 
 interface History { past: SceneObject[][]; future: SceneObject[][] }
