@@ -57,6 +57,34 @@ export function Toolbar() {
   const [cMat, setCMat] = useState<"matte" | "glossy" | "metal" | "glass" | "wood" | "stone" | "concrete">("matte");
   const [cOpen, setCOpen] = useState(false);
 
+  // AI generator
+  const genEl = useServerFn(generateElement);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiErr, setAiErr] = useState<string | null>(null);
+  const [aiOpen, setAiOpen] = useState(true);
+
+  async function aiGen() {
+    const p = aiPrompt.trim();
+    if (!p || aiLoading) return;
+    setAiLoading(true); setAiErr(null);
+    try {
+      const r = await genEl({ data: { prompt: p } });
+      if (r.error || !r.element) { setAiErr(r.error || "Failed"); }
+      else {
+        const e = r.element;
+        addCustom({
+          label: e.label, kind: (e.kind as ObjectKind),
+          size: [Math.max(0.1, e.size[0]), Math.max(0.1, e.size[1]), Math.max(0.1, e.size[2])],
+          color: e.color || "#7a8fbf",
+          material: (e.material as any) || "matte",
+        });
+        setAiPrompt("");
+      }
+    } catch (e: any) { setAiErr(e?.message || "failed"); }
+    finally { setAiLoading(false); }
+  }
+
   const ql = q.trim().toLowerCase();
 
   return (
