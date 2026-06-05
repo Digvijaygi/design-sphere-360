@@ -103,6 +103,18 @@ export function PropertyPanel() {
             <button className="btn-ghost text-xs" onClick={() => toggleHidden(obj.id)}>{obj.hidden ? "Show" : "Hide"}</button>
             <button className="btn-ghost text-xs" onClick={() => select(null)}>Deselect</button>
           </div>
+          <div className="mt-2 p-2 rounded-md border border-primary/40 bg-primary/5 flex flex-col gap-1.5">
+            <div className="text-[10px] uppercase tracking-widest text-primary">🤖 AI Assist</div>
+            <input value={aiP} onChange={(e) => setAiP(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && aiApply()}
+              placeholder="e.g. make taller and golden marble"
+              className="bg-input rounded px-2 py-1 text-xs outline-none" />
+            <button onClick={aiApply} disabled={aiL || !aiP.trim()}
+              className="text-xs py-1 rounded bg-primary text-primary-foreground font-semibold disabled:opacity-50">
+              {aiL ? "✨ Applying…" : "✨ Apply AI Edit"}
+            </button>
+            {aiE && <div className="text-[10px] text-destructive">{aiE}</div>}
+          </div>
           <button className="text-xs py-2 rounded-md bg-destructive text-destructive-foreground font-semibold hover:opacity-90"
             onClick={() => remove(obj.id)}>Delete</button>
         </>
