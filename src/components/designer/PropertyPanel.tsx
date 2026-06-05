@@ -1,3 +1,6 @@
+import { useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { suggestEdit } from "@/lib/ai.functions";
 import { useScene, type SceneObject } from "@/lib/scene-store";
 
 const MATERIALS: SceneObject["material"][] = ["matte", "glossy", "metal", "glass", "wood", "stone", "concrete"];
