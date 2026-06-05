@@ -41,9 +41,19 @@ const PRESETS: { k: PresetKey; label: string; icon: string }[] = [
 
 export function Toolbar() {
   const add = useScene((s) => s.add);
+  const addCustom = useScene((s) => s.addCustom);
   const loadPreset = useScene((s) => s.loadPreset);
   const preset = useScene((s) => s.preset);
   const [q, setQ] = useState("");
+
+  // Custom element form
+  const [cName, setCName] = useState("My Block");
+  const [cW, setCW] = useState(2);
+  const [cH, setCH] = useState(2);
+  const [cD, setCD] = useState(2);
+  const [cColor, setCColor] = useState("#7a8fbf");
+  const [cMat, setCMat] = useState<"matte" | "glossy" | "metal" | "glass" | "wood" | "stone" | "concrete">("matte");
+  const [cOpen, setCOpen] = useState(false);
 
   const ql = q.trim().toLowerCase();
 
@@ -60,6 +70,38 @@ export function Toolbar() {
             </button>
           ))}
         </div>
+      </div>
+
+      <div>
+        <button onClick={() => setCOpen((v) => !v)}
+          className="w-full flex items-center justify-between text-xs uppercase tracking-widest text-muted-foreground mb-2 hover:text-foreground">
+          <span>✨ Custom Element</span><span>{cOpen ? "▾" : "▸"}</span>
+        </button>
+        {cOpen && (
+          <div className="flex flex-col gap-1.5 p-2 rounded-md border border-border bg-background/40">
+            <input value={cName} onChange={(e) => setCName(e.target.value)} placeholder="Name"
+              className="bg-input rounded px-2 py-1 text-xs outline-none" />
+            <div className="grid grid-cols-3 gap-1">
+              {([["W", cW, setCW], ["H", cH, setCH], ["D", cD, setCD]] as const).map(([l, v, set]) => (
+                <label key={l} className="flex items-center gap-1 text-[10px]">
+                  <span className="text-muted-foreground">{l}</span>
+                  <input type="number" step={0.1} value={v} onChange={(e) => set(parseFloat(e.target.value) || 0.1)}
+                    className="w-full bg-input rounded px-1 py-0.5 text-[11px] outline-none" />
+                </label>
+              ))}
+            </div>
+            <div className="flex items-center gap-1.5">
+              <input type="color" value={cColor} onChange={(e) => setCColor(e.target.value)}
+                className="w-8 h-7 rounded bg-transparent border border-border" />
+              <select value={cMat} onChange={(e) => setCMat(e.target.value as any)}
+                className="flex-1 bg-input rounded px-1 py-1 text-[11px] outline-none">
+                {["matte","glossy","metal","glass","wood","stone","concrete"].map((m) => <option key={m} value={m}>{m}</option>)}
+              </select>
+            </div>
+            <button onClick={() => addCustom({ label: cName, size: [Math.max(0.1,cW), Math.max(0.1,cH), Math.max(0.1,cD)], color: cColor, material: cMat })}
+              className="text-xs py-1.5 rounded bg-primary text-primary-foreground font-semibold hover:opacity-90">+ Create Element</button>
+          </div>
+        )}
       </div>
 
       <div>
