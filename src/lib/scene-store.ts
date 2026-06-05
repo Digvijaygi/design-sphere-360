@@ -52,6 +52,7 @@ interface SceneState {
   settings: SceneSettings;
   history: History;
   add: (kind: ObjectKind) => void;
+  addCustom: (opts: { label: string; size: [number, number, number]; color: string; material?: SceneObject["material"]; kind?: ObjectKind }) => void;
   remove: (id: string) => void;
   duplicate: (id: string) => void;
   select: (id: string | null) => void;
@@ -324,6 +325,14 @@ export const useScene = create<SceneState>((set, get) => {
     add: (kind) => {
       const def = defaults[kind];
       const obj: SceneObject = { id: uid(), ...def, position: [0, def.size[1] / 2, 0] };
+      push([...get().objects, obj]);
+      set({ selectedId: obj.id });
+    },
+    addCustom: ({ label, size, color, material = "matte", kind = "furniture" }) => {
+      const obj: SceneObject = {
+        id: uid(), kind, label: label || "Custom",
+        position: [0, size[1] / 2, 0], size, rotationY: 0, color, material, costPerUnit: 150,
+      };
       push([...get().objects, obj]);
       set({ selectedId: obj.id });
     },
