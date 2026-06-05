@@ -62,3 +62,60 @@ Units = meters. Ground floor Y=0. Position is the object CENTER. Walls: thicknes
       return { objects: [], error: "Parse failed: " + (e?.message || "unknown") };
     }
   });
+
+const ElementSchema = z.object({
+  kind: z.string(),
+  label: z.string(),
+  size: z.array(z.number()).length(3),
+  color: z.string(),
+  material: z.string().optional(),
+  rotationY: z.number().optional(),
+});
+
+export const generateElement = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => z.object({ prompt: z.string().min(1).max(500) }).parse(d))
+  .handler(async ({ data }) => {
+    const sys = `You design ONE custom 3D architectural element. Output STRICT JSON only:
+{ "kind": <one of: ${KINDS.join(", ")}>, "label": "short name", "size": [w,h,d], "color": "#hex", "material": "matte|glossy|metal|glass|wood|stone|concrete", "rotationY": 0 }
+Units = meters. Realistic dimensions. Pick the closest "kind" to the idea (use "furniture" if nothing fits).`;
+    const r = await gemini({
+      systemInstruction: { role: "system", parts: [{ text: sys }] },
+      contents: [{ role: "user", parts: [{ text: data.prompt }] }],
+      generationConfig: { temperature: 0.9, maxOutputTokens: 512, responseMimeType: "application/json" },
+    });
+    if (!r.ok) return { element: null, error: r.text };
+    try {
+      const cleaned = r.text.replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
+      const parsed = ElementSchema.parse(JSON.parse(cleaned));
+      return { element: parsed, error: null as string | null };
+    } catch (e: any) {
+      return { element: null, error: "Parse failed: " + (e?.message || "unknown") };
+    }
+  });
+
+export const suggestEdit = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => z.object({
+    prompt: z.string().min(1).max(500),
+    object: z.object({
+      label: z.string(), kind: z.string(),
+      size: z.array(z.number()).length(3),
+      color: z.string(), material: z.string().optional(),
+    }),
+  }).parse(d))
+  .handler(async ({ data }) => {
+    const sys = `You edit ONE 3D object. Apply the user's change. Output STRICT JSON only:
+{ "size": [w,h,d], "color": "#hex", "material": "matte|glossy|metal|glass|wood|stone|concrete", "label": "name" }
+Keep values realistic in meters. Only change what the user asks; keep others same as input.`;
+    const r = await gemini({
+      systemInstruction: { role: "system", parts: [{ text: sys }] },
+      contents: [{ role: "user", parts: [{ text: `Object: ${JSON.stringify(data.object)}\n\nChange: ${data.prompt}` }] }],
+      generationConfig: { temperature: 0.6, maxOutputTokens: 400, responseMimeType: "application/json" },
+    });
+    if (!r.ok) return { patch: null, error: r.text };
+    try {
+      const cleaned = r.text.replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
+      return { patch: JSON.parse(cleaned), error: null as string | null };
+    } catch (e: any) {
+      return { patch: null, error: "Parse failed: " + (e?.message || "unknown") };
+    }
+  });
