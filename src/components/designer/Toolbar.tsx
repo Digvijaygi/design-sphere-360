@@ -103,9 +103,36 @@ export function Toolbar() {
       </div>
 
       <div>
+        <button onClick={() => setAiOpen((v) => !v)}
+          className="w-full flex items-center justify-between text-xs uppercase tracking-widest text-muted-foreground mb-2 hover:text-foreground">
+          <span>🤖 AI Element Generator</span><span>{aiOpen ? "▾" : "▸"}</span>
+        </button>
+        {aiOpen && (
+          <div className="flex flex-col gap-1.5 p-2 rounded-md border border-primary/40 bg-primary/5">
+            <p className="text-[10px] text-muted-foreground leading-tight">Describe anything — AI builds it with realistic size, color & material.</p>
+            <textarea value={aiPrompt} onChange={(e) => setAiPrompt(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) aiGen(); }}
+              placeholder="e.g. royal wooden throne, spiral marble staircase, neon arcade machine…"
+              rows={2} className="bg-input rounded px-2 py-1 text-xs outline-none resize-none" />
+            <button onClick={aiGen} disabled={aiLoading || !aiPrompt.trim()}
+              className="text-xs py-1.5 rounded bg-primary text-primary-foreground font-semibold hover:opacity-90 disabled:opacity-50">
+              {aiLoading ? "✨ Generating…" : "✨ Generate with AI"}
+            </button>
+            {aiErr && <div className="text-[10px] text-destructive">{aiErr}</div>}
+            <div className="flex flex-wrap gap-1 pt-1">
+              {["luxury sofa", "spiral staircase", "crystal chandelier", "Japanese zen garden", "marble fountain"].map((s) => (
+                <button key={s} onClick={() => setAiPrompt(s)}
+                  className="text-[10px] px-1.5 py-0.5 rounded bg-secondary hover:bg-secondary/70">{s}</button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div>
         <button onClick={() => setCOpen((v) => !v)}
           className="w-full flex items-center justify-between text-xs uppercase tracking-widest text-muted-foreground mb-2 hover:text-foreground">
-          <span>✨ Custom Element</span><span>{cOpen ? "▾" : "▸"}</span>
+          <span>✨ Custom Element (Manual)</span><span>{cOpen ? "▾" : "▸"}</span>
         </button>
         {cOpen && (
           <div className="flex flex-col gap-1.5 p-2 rounded-md border border-border bg-background/40">
