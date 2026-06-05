@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { generateElement } from "@/lib/ai.functions";
 import { useScene, type ObjectKind, type PresetKey, defaults } from "@/lib/scene-store";
 
 const CATEGORIES: { name: string; items: { k: ObjectKind; icon: string }[] }[] = [
