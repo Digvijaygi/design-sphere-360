@@ -28,6 +28,31 @@ export function PropertyPanel() {
 
   const obj = objects.find((o) => o.id === selectedId);
 
+  const ask = useServerFn(suggestEdit);
+  const [aiP, setAiP] = useState("");
+  const [aiL, setAiL] = useState(false);
+  const [aiE, setAiE] = useState<string | null>(null);
+  async function aiApply() {
+    if (!obj || !aiP.trim() || aiL) return;
+    setAiL(true); setAiE(null);
+    try {
+      const r = await ask({ data: { prompt: aiP.trim(), object: { label: obj.label, kind: obj.kind, size: obj.size as any, color: obj.color, material: obj.material } } });
+      if (r.error || !r.patch) setAiE(r.error || "Failed");
+      else {
+        const p: any = r.patch;
+        const patch: any = {};
+        if (Array.isArray(p.size) && p.size.length === 3) patch.size = [Math.max(0.05, p.size[0]), Math.max(0.05, p.size[1]), Math.max(0.05, p.size[2])];
+        if (typeof p.color === "string") patch.color = p.color;
+        if (typeof p.material === "string") patch.material = p.material;
+        if (typeof p.label === "string") patch.label = p.label;
+        update(obj.id, patch);
+        setAiP("");
+      }
+    } catch (e: any) { setAiE(e?.message || "failed"); }
+    finally { setAiL(false); }
+  }
+
+
   return (
     <div className="panel p-3 flex flex-col gap-3 w-64 overflow-y-auto">
       <div className="text-xs uppercase tracking-widest text-muted-foreground">Properties</div>
