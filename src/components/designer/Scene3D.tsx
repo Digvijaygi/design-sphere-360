@@ -256,6 +256,62 @@ function DimensionsLabel({ obj }: { obj: SceneObject }) {
   );
 }
 
+function TransformGizmo() {
+  const selectedId = useScene((s) => s.selectedId);
+  const objects = useScene((s) => s.objects);
+  const update = useScene((s) => s.update);
+  const mode = useScene((s) => s.settings.gizmoMode);
+  const viewMode = useScene((s) => s.settings.viewMode);
+  const sel = objects.find((o) => o.id === selectedId);
+  const proxy = useRef<THREE.Group>(null);
+  const [, force] = useState(0);
+
+  useEffect(() => {
+    if (!sel || !proxy.current) return;
+    proxy.current.position.set(sel.position[0], sel.position[1], sel.position[2]);
+    proxy.current.rotation.set(0, sel.rotationY, 0);
+    proxy.current.scale.set(1, 1, 1);
+    force((n) => n + 1);
+  }, [sel?.id]);
+
+  if (!sel || sel.locked || sel.hidden) return <group ref={proxy} />;
+
+  const showRotate = viewMode === "3d" || viewMode === "top";
+  const showTranslate = true;
+  const actualMode = mode === "rotate" && !showRotate ? "translate" : mode;
+
+  return (
+    <>
+      <group ref={proxy} />
+      {proxy.current && (
+        <TransformControls
+          object={proxy.current}
+          mode={actualMode}
+          size={0.9}
+          translationSnap={undefined}
+          showY={showTranslate}
+          onObjectChange={() => {
+            const g = proxy.current!;
+            const patch: Partial<SceneObject> = {
+              position: [g.position.x, Math.max(0, g.position.y), g.position.z],
+              rotationY: g.rotation.y,
+            };
+            if (actualMode === "scale") {
+              patch.size = [
+                Math.max(0.05, sel.size[0] * g.scale.x),
+                Math.max(0.05, sel.size[1] * g.scale.y),
+                Math.max(0.05, sel.size[2] * g.scale.z),
+              ];
+              g.scale.set(1, 1, 1);
+            }
+            update(sel.id, patch);
+          }}
+        />
+      )}
+    </>
+  );
+}
+
 export function Scene3D() {
   const objects = useScene((s) => s.objects);
   const selectedId = useScene((s) => s.selectedId);
@@ -287,7 +343,9 @@ export function Scene3D() {
         <ObjectMesh key={o.id} obj={o} selected={o.id === selectedId} onClick={() => select(o.id)} />
       ))}
       {settings.showDimensions && selected && <DimensionsLabel obj={selected} />}
+      <TransformGizmo />
       <OrbitControls makeDefault enableDamping dampingFactor={0.08} minDistance={2} maxDistance={120} maxPolarAngle={settings.viewMode === "top" ? 0.001 : Math.PI / 2 - 0.02} />
     </Canvas>
   );
 }
+
