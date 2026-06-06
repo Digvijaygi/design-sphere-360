@@ -112,6 +112,8 @@ function DesignerPage() {
           </div>
 
           <GizmoOverlay />
+          <ViewportTools />
+
 
           {/* Right-side overlay buttons */}
           <div className="absolute bottom-3 right-3 flex gap-1">
