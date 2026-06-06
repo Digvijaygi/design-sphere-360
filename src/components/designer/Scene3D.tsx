@@ -377,6 +377,62 @@ function TransformGizmo() {
   );
 }
 
+function WeatherFx() {
+  const w = useScene((s) => s.settings.weather);
+  const ref = useRef<THREE.Points>(null);
+  const count = w === "none" ? 0 : 1200;
+  const positions = useMemo(() => {
+    const arr = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) {
+      arr[i * 3] = (Math.random() - 0.5) * 80;
+      arr[i * 3 + 1] = Math.random() * 30;
+      arr[i * 3 + 2] = (Math.random() - 0.5) * 80;
+    }
+    return arr;
+  }, [count]);
+  useFrame((_, dt) => {
+    if (!ref.current || w === "none") return;
+    const pos = (ref.current.geometry.attributes.position as THREE.BufferAttribute).array as Float32Array;
+    const fall = w === "rain" ? 30 : 4;
+    const drift = w === "snow" ? 1.5 : 0.2;
+    for (let i = 0; i < pos.length; i += 3) {
+      pos[i + 1] -= fall * dt;
+      pos[i] += (Math.sin(pos[i + 1] * 0.5 + i) * drift) * dt;
+      if (pos[i + 1] < 0) pos[i + 1] = 30;
+    }
+    (ref.current.geometry.attributes.position as THREE.BufferAttribute).needsUpdate = true;
+  });
+  if (w === "none") return null;
+  return (
+    <Points ref={ref} positions={positions} stride={3} frustumCulled={false}>
+      <PointMaterial transparent color={w === "snow" ? "#ffffff" : "#9cc4ff"} size={w === "snow" ? 0.12 : 0.06} sizeAttenuation depthWrite={false} />
+    </Points>
+  );
+}
+
+function WalkController() {
+  const { camera } = useThree();
+  const keys = useRef<Record<string, boolean>>({});
+  useEffect(() => {
+    const d = (e: KeyboardEvent) => { keys.current[e.key.toLowerCase()] = true; };
+    const u = (e: KeyboardEvent) => { keys.current[e.key.toLowerCase()] = false; };
+    window.addEventListener("keydown", d); window.addEventListener("keyup", u);
+    camera.position.set(6, 1.7, 8);
+    return () => { window.removeEventListener("keydown", d); window.removeEventListener("keyup", u); };
+  }, [camera]);
+  useFrame((_, dt) => {
+    const speed = (keys.current["shift"] ? 8 : 4) * dt;
+    const fwd = new THREE.Vector3(); camera.getWorldDirection(fwd); fwd.y = 0; fwd.normalize();
+    const right = new THREE.Vector3().crossVectors(fwd, new THREE.Vector3(0, 1, 0));
+    if (keys.current["w"] || keys.current["arrowup"]) camera.position.addScaledVector(fwd, speed);
+    if (keys.current["s"] || keys.current["arrowdown"]) camera.position.addScaledVector(fwd, -speed);
+    if (keys.current["a"] || keys.current["arrowleft"]) camera.position.addScaledVector(right, -speed);
+    if (keys.current["d"] || keys.current["arrowright"]) camera.position.addScaledVector(right, speed);
+    camera.position.y = 1.7;
+  });
+  return <PointerLockControls />;
+}
+
 export function Scene3D() {
   const objects = useScene((s) => s.objects);
   const selectedId = useScene((s) => s.selectedId);
@@ -389,27 +445,36 @@ export function Scene3D() {
       shadows
       onPointerMissed={() => select(null)}
       style={{ background: settings.viewMode === "top" ? "#0e1a2b" : "linear-gradient(180deg,#0e1a2b 0%,#1b2a44 100%)" }}
-      gl={{ preserveDrawingBuffer: true }}
+      gl={{ preserveDrawingBuffer: true, antialias: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.05 }}
+      dpr={[1, 2]}
     >
-      <CameraSwitcher />
+      {settings.hq && <SoftShadows size={28} samples={12} focus={0.5} />}
+      {!settings.walkMode && <CameraSwitcher />}
+      {settings.walkMode && <PerspectiveCamera makeDefault position={[6, 1.7, 8]} fov={70} />}
       {settings.viewMode !== "top" && <SkyRig />}
       <SunLight />
       <FogRig />
       <ScreenshotRig />
+      <WeatherFx />
       {settings.viewMode !== "top" && <Environment preset="city" />}
-      {settings.showGrid && (
+      {settings.showGrid && !settings.walkMode && (
         <Grid args={[80, 80]} cellSize={1} cellThickness={0.5} cellColor="#3a5278" sectionSize={5} sectionThickness={1} sectionColor="#f5b441" fadeDistance={80} infiniteGrid position={[0, 0.01, 0]} />
       )}
       <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.001, 0]}>
         <planeGeometry args={[300, 300]} />
         <meshStandardMaterial color={settings.groundColor} roughness={1} />
       </mesh>
+      {settings.hq && <ContactShadows position={[0, 0.01, 0]} opacity={0.55} scale={80} blur={2.4} far={20} resolution={1024} color="#000" />}
       {objects.map((o) => (
         <ObjectMesh key={o.id} obj={o} selected={o.id === selectedId} onClick={() => select(o.id)} />
       ))}
-      {settings.showDimensions && selected && <DimensionsLabel obj={selected} />}
-      <TransformGizmo />
-      <OrbitControls makeDefault enableDamping dampingFactor={0.08} minDistance={2} maxDistance={120} maxPolarAngle={settings.viewMode === "top" ? 0.001 : Math.PI / 2 - 0.02} />
+      {settings.showDimensions && selected && !settings.walkMode && <DimensionsLabel obj={selected} />}
+      {!settings.walkMode && <TransformGizmo />}
+      {settings.walkMode ? (
+        <WalkController />
+      ) : (
+        <OrbitControls makeDefault enableDamping dampingFactor={0.08} minDistance={2} maxDistance={120} maxPolarAngle={settings.viewMode === "top" ? 0.001 : Math.PI / 2 - 0.02} />
+      )}
     </Canvas>
   );
 }
