@@ -29,6 +29,7 @@ export type PresetKey =
 
 export type ViewMode = "3d" | "top" | "front" | "side";
 export type GizmoMode = "translate" | "rotate" | "scale";
+export type Weather = "none" | "rain" | "snow";
 
 export interface SceneSettings {
   timeOfDay: number; // 0-24
@@ -41,6 +42,9 @@ export interface SceneSettings {
   viewMode: ViewMode;
   screenshotTick: number;
   gizmoMode: GizmoMode;
+  walkMode: boolean;
+  weather: Weather;
+  hq: boolean; // high-quality contact shadows + soft shadows
 }
 
 interface History { past: SceneObject[][]; future: SceneObject[][] }
