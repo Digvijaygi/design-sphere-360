@@ -328,14 +328,22 @@ export const useScene = create<SceneState>((set, get) => {
     history: { past: [], future: [] },
     add: (kind) => {
       const def = defaults[kind];
-      const obj: SceneObject = { id: uid(), ...def, position: [0, def.size[1] / 2, 0] };
+      const n = get().objects.length;
+      const r = 3 + (n % 6) * 0.6;
+      const a = n * 0.7;
+      const pos: [number, number, number] = [Math.cos(a) * r, def.size[1] / 2, Math.sin(a) * r];
+      const obj: SceneObject = { id: uid(), ...def, position: pos };
       push([...get().objects, obj]);
       set({ selectedId: obj.id });
     },
     addCustom: ({ label, size, color, material = "matte", kind = "furniture" }) => {
+      const n = get().objects.length;
+      const r = 3 + (n % 6) * 0.6;
+      const a = n * 0.7;
       const obj: SceneObject = {
         id: uid(), kind, label: label || "Custom",
-        position: [0, size[1] / 2, 0], size, rotationY: 0, color, material, costPerUnit: 150,
+        position: [Math.cos(a) * r, size[1] / 2, Math.sin(a) * r],
+        size, rotationY: 0, color, material, costPerUnit: 150,
       };
       push([...get().objects, obj]);
       set({ selectedId: obj.id });
