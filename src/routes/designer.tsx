@@ -95,6 +95,7 @@ function DesignerPage() {
   const [chatOpen, setChatOpen] = useState(true);
   const [fullscreen, setFullscreen] = useState(false);
   const setSetting = useScene((s) => s.setSetting);
+  const walkMode = useScene((s) => s.settings.walkMode);
   const setGizmo = (m: GizmoMode) => setSetting("gizmoMode", m);
   const toggleFs = () => setFullscreen((v) => !v);
 
