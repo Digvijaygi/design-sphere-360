@@ -42,14 +42,18 @@ function ObjectMesh({ obj, selected, onClick }: { obj: SceneObject; selected: bo
     case "dome":
       return <mesh {...common}><sphereGeometry args={[obj.size[0] / 2, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2]} /><Mat obj={obj} selected={selected} /></mesh>;
     case "column":
-      return <mesh {...common}><cylinderGeometry args={[obj.size[0] / 2, obj.size[0] / 2, obj.size[1], 16]} /><Mat obj={obj} selected={selected} /></mesh>;
-    case "tree":
+      return <mesh {...common}><cylinderGeometry args={[obj.size[0] / 2, obj.size[0] / 2, obj.size[1], 24]} /><Mat obj={obj} selected={selected} /></mesh>;
+    case "tree": {
+      const r = obj.size[0];
       return (
         <group {...common}>
-          <mesh position={[0, -obj.size[1] / 2 + 0.4, 0]} castShadow><cylinderGeometry args={[0.1, 0.15, 0.8, 8]} /><meshStandardMaterial color="#5a3a20" /></mesh>
-          <mesh position={[0, 0.4, 0]} castShadow><sphereGeometry args={[obj.size[0], 12, 12]} /><Mat obj={obj} selected={selected} /></mesh>
+          <mesh position={[0, -obj.size[1] / 2 + 0.5, 0]} castShadow><cylinderGeometry args={[0.12, 0.18, 1, 10]} /><meshStandardMaterial color="#5a3a20" roughness={0.95} /></mesh>
+          <mesh position={[0, 0.1, 0]} castShadow><coneGeometry args={[r * 1.1, r * 1.6, 12]} /><meshStandardMaterial color="#2f5d2a" roughness={0.9} /></mesh>
+          <mesh position={[0, 0.7, 0]} castShadow><coneGeometry args={[r * 0.9, r * 1.3, 12]} /><meshStandardMaterial color="#3a6f33" roughness={0.9} /></mesh>
+          <mesh position={[0, 1.2, 0]} castShadow><coneGeometry args={[r * 0.65, r * 1.0, 12]} /><meshStandardMaterial color="#46823c" roughness={0.9} /></mesh>
         </group>
       );
+    }
     case "plant":
       return (
         <group {...common}>
