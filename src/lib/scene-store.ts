@@ -29,6 +29,7 @@ export type PresetKey =
 
 export type ViewMode = "3d" | "top" | "front" | "side";
 export type GizmoMode = "translate" | "rotate" | "scale";
+export type Weather = "none" | "rain" | "snow";
 
 export interface SceneSettings {
   timeOfDay: number; // 0-24
@@ -41,6 +42,9 @@ export interface SceneSettings {
   viewMode: ViewMode;
   screenshotTick: number;
   gizmoMode: GizmoMode;
+  walkMode: boolean;
+  weather: Weather;
+  hq: boolean; // high-quality contact shadows + soft shadows
 }
 
 interface History { past: SceneObject[][]; future: SceneObject[][] }
@@ -306,7 +310,7 @@ const initialSettings: SceneSettings = {
   timeOfDay: 13, fog: 0.0, groundColor: "#2a3a2a",
   snapEnabled: true, snapSize: 0.5, showDimensions: true,
   showGrid: true, viewMode: "3d", screenshotTick: 0,
-  gizmoMode: "translate",
+  gizmoMode: "translate", walkMode: false, weather: "none", hq: true,
 };
 
 const snap = (v: number, s: number) => Math.round(v / s) * s;
@@ -324,14 +328,22 @@ export const useScene = create<SceneState>((set, get) => {
     history: { past: [], future: [] },
     add: (kind) => {
       const def = defaults[kind];
-      const obj: SceneObject = { id: uid(), ...def, position: [0, def.size[1] / 2, 0] };
+      const n = get().objects.length;
+      const r = 3 + (n % 6) * 0.6;
+      const a = n * 0.7;
+      const pos: [number, number, number] = [Math.cos(a) * r, def.size[1] / 2, Math.sin(a) * r];
+      const obj: SceneObject = { id: uid(), ...def, position: pos };
       push([...get().objects, obj]);
       set({ selectedId: obj.id });
     },
     addCustom: ({ label, size, color, material = "matte", kind = "furniture" }) => {
+      const n = get().objects.length;
+      const r = 3 + (n % 6) * 0.6;
+      const a = n * 0.7;
       const obj: SceneObject = {
         id: uid(), kind, label: label || "Custom",
-        position: [0, size[1] / 2, 0], size, rotationY: 0, color, material, costPerUnit: 150,
+        position: [Math.cos(a) * r, size[1] / 2, Math.sin(a) * r],
+        size, rotationY: 0, color, material, costPerUnit: 150,
       };
       push([...get().objects, obj]);
       set({ selectedId: obj.id });

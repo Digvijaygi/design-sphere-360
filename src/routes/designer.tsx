@@ -66,12 +66,36 @@ function GizmoOverlay() {
   );
 }
 
+function ViewportTools() {
+  const settings = useScene((s) => s.settings);
+  const setSetting = useScene((s) => s.setSetting);
+  const requestScreenshot = useScene((s) => s.requestScreenshot);
+  const cycleWeather = () => {
+    const next = settings.weather === "none" ? "rain" : settings.weather === "rain" ? "snow" : "none";
+    setSetting("weather", next);
+  };
+  const weatherIcon = settings.weather === "rain" ? "🌧" : settings.weather === "snow" ? "❄" : "☀";
+  return (
+    <div className="absolute top-3 right-32 flex gap-1 bg-background/80 backdrop-blur p-1 rounded-md border border-border">
+      <button title="Walk-through mode (FPS)" onClick={() => setSetting("walkMode", !settings.walkMode)}
+        className={`w-9 h-8 text-base rounded ${settings.walkMode ? "bg-primary text-primary-foreground" : "hover:bg-secondary"}`}>🚶</button>
+      <button title={`Weather: ${settings.weather}`} onClick={cycleWeather}
+        className="w-9 h-8 text-base rounded hover:bg-secondary">{weatherIcon}</button>
+      <button title="HQ shadows" onClick={() => setSetting("hq", !settings.hq)}
+        className={`w-9 h-8 text-xs rounded ${settings.hq ? "bg-primary text-primary-foreground" : "hover:bg-secondary"}`}>HQ</button>
+      <button title="Screenshot PNG" onClick={requestScreenshot}
+        className="w-9 h-8 text-base rounded hover:bg-secondary">📸</button>
+    </div>
+  );
+}
+
 function DesignerPage() {
   const [leftOpen, setLeftOpen] = useState(true);
   const [rightOpen, setRightOpen] = useState(true);
   const [chatOpen, setChatOpen] = useState(true);
   const [fullscreen, setFullscreen] = useState(false);
   const setSetting = useScene((s) => s.setSetting);
+  const walkMode = useScene((s) => s.settings.walkMode);
   const setGizmo = (m: GizmoMode) => setSetting("gizmoMode", m);
   const toggleFs = () => setFullscreen((v) => !v);
 
@@ -108,10 +132,14 @@ function DesignerPage() {
           )}
 
           <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-background/70 backdrop-blur px-3 py-1.5 rounded-md text-xs border border-border pointer-events-none">
-            360° Orbit View
+            {walkMode ? "🚶 Walk Mode · click to lock · WASD / Shift to sprint" : "360° Orbit View"}
           </div>
 
+
+
           <GizmoOverlay />
+          <ViewportTools />
+
 
           {/* Right-side overlay buttons */}
           <div className="absolute bottom-3 right-3 flex gap-1">

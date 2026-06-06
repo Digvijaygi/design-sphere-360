@@ -1,5 +1,5 @@
-import { Canvas, useThree } from "@react-three/fiber";
-import { OrbitControls, Grid, Environment, Sky, Html, OrthographicCamera, PerspectiveCamera, TransformControls } from "@react-three/drei";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { OrbitControls, Grid, Environment, Sky, Html, OrthographicCamera, PerspectiveCamera, TransformControls, ContactShadows, SoftShadows, PointerLockControls, Points, PointMaterial } from "@react-three/drei";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useScene, type SceneObject } from "@/lib/scene-store";
 import * as THREE from "three";
@@ -42,14 +42,18 @@ function ObjectMesh({ obj, selected, onClick }: { obj: SceneObject; selected: bo
     case "dome":
       return <mesh {...common}><sphereGeometry args={[obj.size[0] / 2, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2]} /><Mat obj={obj} selected={selected} /></mesh>;
     case "column":
-      return <mesh {...common}><cylinderGeometry args={[obj.size[0] / 2, obj.size[0] / 2, obj.size[1], 16]} /><Mat obj={obj} selected={selected} /></mesh>;
-    case "tree":
+      return <mesh {...common}><cylinderGeometry args={[obj.size[0] / 2, obj.size[0] / 2, obj.size[1], 24]} /><Mat obj={obj} selected={selected} /></mesh>;
+    case "tree": {
+      const r = obj.size[0];
       return (
         <group {...common}>
-          <mesh position={[0, -obj.size[1] / 2 + 0.4, 0]} castShadow><cylinderGeometry args={[0.1, 0.15, 0.8, 8]} /><meshStandardMaterial color="#5a3a20" /></mesh>
-          <mesh position={[0, 0.4, 0]} castShadow><sphereGeometry args={[obj.size[0], 12, 12]} /><Mat obj={obj} selected={selected} /></mesh>
+          <mesh position={[0, -obj.size[1] / 2 + 0.5, 0]} castShadow><cylinderGeometry args={[0.12, 0.18, 1, 10]} /><meshStandardMaterial color="#5a3a20" roughness={0.95} /></mesh>
+          <mesh position={[0, 0.1, 0]} castShadow><coneGeometry args={[r * 1.1, r * 1.6, 12]} /><meshStandardMaterial color="#2f5d2a" roughness={0.9} /></mesh>
+          <mesh position={[0, 0.7, 0]} castShadow><coneGeometry args={[r * 0.9, r * 1.3, 12]} /><meshStandardMaterial color="#3a6f33" roughness={0.9} /></mesh>
+          <mesh position={[0, 1.2, 0]} castShadow><coneGeometry args={[r * 0.65, r * 1.0, 12]} /><meshStandardMaterial color="#46823c" roughness={0.9} /></mesh>
         </group>
       );
+    }
     case "plant":
       return (
         <group {...common}>
@@ -183,11 +187,72 @@ function ObjectMesh({ obj, selected, onClick }: { obj: SceneObject; selected: bo
       );
     case "solar":
       return <mesh {...common} rotation={[-Math.PI / 8, obj.rotationY, 0]}><boxGeometry args={obj.size} /><meshStandardMaterial color={obj.color} metalness={0.7} roughness={0.2} /></mesh>;
-    case "kitchen":
+    case "door":
+      return (
+        <group {...common}>
+          <mesh castShadow><boxGeometry args={obj.size} /><Mat obj={obj} selected={selected} /></mesh>
+          <mesh position={[obj.size[0] * 0.35, 0, obj.size[2] / 2 + 0.02]} castShadow>
+            <sphereGeometry args={[0.06, 14, 14]} />
+            <meshStandardMaterial color="#d4af37" metalness={0.95} roughness={0.15} />
+          </mesh>
+        </group>
+      );
+    case "window":
+      return (
+        <group {...common}>
+          <mesh castShadow><boxGeometry args={[obj.size[0], obj.size[1], obj.size[2] * 0.6]} /><meshStandardMaterial color="#2a1a10" roughness={0.8} /></mesh>
+          <mesh>
+            <boxGeometry args={[obj.size[0] * 0.9, obj.size[1] * 0.9, obj.size[2] * 1.05]} />
+            <meshPhysicalMaterial color={obj.color} transmission={0.9} transparent opacity={0.55} roughness={0.05} metalness={0.1} thickness={0.05} ior={1.45} />
+          </mesh>
+          <mesh><boxGeometry args={[obj.size[0] * 0.95, 0.04, obj.size[2] * 1.06]} /><meshStandardMaterial color="#2a1a10" /></mesh>
+          <mesh><boxGeometry args={[0.04, obj.size[1] * 0.95, obj.size[2] * 1.06]} /><meshStandardMaterial color="#2a1a10" /></mesh>
+        </group>
+      );
+    case "sofa": {
+      const w = obj.size[0], h = obj.size[1], d = obj.size[2];
+      return (
+        <group {...common}>
+          <mesh castShadow position={[0, -h * 0.15, 0]}><boxGeometry args={[w, h * 0.5, d]} /><Mat obj={obj} selected={selected} /></mesh>
+          <mesh castShadow position={[0, h * 0.2, -d * 0.35]}><boxGeometry args={[w, h * 0.6, d * 0.3]} /><Mat obj={obj} selected={selected} /></mesh>
+          <mesh castShadow position={[-w * 0.45, h * 0.05, 0]}><boxGeometry args={[w * 0.1, h * 0.5, d]} /><Mat obj={obj} selected={selected} /></mesh>
+          <mesh castShadow position={[w * 0.45, h * 0.05, 0]}><boxGeometry args={[w * 0.1, h * 0.5, d]} /><Mat obj={obj} selected={selected} /></mesh>
+          <mesh castShadow position={[-w * 0.22, h * 0.15, d * 0.1]}><boxGeometry args={[w * 0.35, h * 0.15, d * 0.7]} /><meshStandardMaterial color={obj.color} roughness={0.85} /></mesh>
+          <mesh castShadow position={[w * 0.22, h * 0.15, d * 0.1]}><boxGeometry args={[w * 0.35, h * 0.15, d * 0.7]} /><meshStandardMaterial color={obj.color} roughness={0.85} /></mesh>
+        </group>
+      );
+    }
     case "bathtub":
+      return (
+        <group {...common}>
+          <mesh castShadow><boxGeometry args={obj.size} /><meshPhysicalMaterial color={obj.color} roughness={0.1} metalness={0.05} clearcoat={1} /></mesh>
+          <mesh position={[0, obj.size[1] * 0.1, 0]}><boxGeometry args={[obj.size[0] * 0.88, obj.size[1] * 0.7, obj.size[2] * 0.88]} /><meshStandardMaterial color="#7ec8e3" transparent opacity={0.55} /></mesh>
+        </group>
+      );
     case "sink":
+      return (
+        <group {...common}>
+          <mesh castShadow position={[0, -obj.size[1] * 0.2, 0]}><boxGeometry args={[obj.size[0], obj.size[1] * 0.6, obj.size[2]]} /><meshStandardMaterial color="#cfcfcf" /></mesh>
+          <mesh castShadow position={[0, obj.size[1] * 0.15, 0]}><boxGeometry args={[obj.size[0] * 0.95, obj.size[1] * 0.25, obj.size[2] * 0.95]} /><meshPhysicalMaterial color={obj.color} roughness={0.1} clearcoat={1} /></mesh>
+          <mesh castShadow position={[0, obj.size[1] * 0.4, -obj.size[2] * 0.3]}><cylinderGeometry args={[0.04, 0.04, obj.size[1] * 0.4, 10]} /><meshStandardMaterial color="#cfcfcf" metalness={0.9} roughness={0.15} /></mesh>
+        </group>
+      );
     case "toilet":
-    case "sofa":
+      return (
+        <group {...common}>
+          <mesh castShadow position={[0, -obj.size[1] * 0.15, 0]}><boxGeometry args={[obj.size[0], obj.size[1] * 0.55, obj.size[2] * 0.95]} /><meshPhysicalMaterial color={obj.color} roughness={0.1} clearcoat={1} /></mesh>
+          <mesh castShadow position={[0, obj.size[1] * 0.25, -obj.size[2] * 0.25]}><boxGeometry args={[obj.size[0] * 0.95, obj.size[1] * 0.45, obj.size[2] * 0.45]} /><meshPhysicalMaterial color={obj.color} roughness={0.1} clearcoat={1} /></mesh>
+        </group>
+      );
+    case "kitchen":
+      return (
+        <group {...common}>
+          <mesh castShadow position={[0, -obj.size[1] * 0.05, 0]}><boxGeometry args={[obj.size[0], obj.size[1] * 0.9, obj.size[2]]} /><Mat obj={obj} selected={selected} /></mesh>
+          <mesh castShadow position={[0, obj.size[1] * 0.45, 0]}><boxGeometry args={[obj.size[0] * 1.02, obj.size[1] * 0.1, obj.size[2] * 1.05]} /><meshStandardMaterial color="#222" roughness={0.3} metalness={0.4} /></mesh>
+          <mesh castShadow position={[-obj.size[0] * 0.25, obj.size[1] * 0.52, 0]}><cylinderGeometry args={[0.12, 0.12, 0.02, 16]} /><meshStandardMaterial color="#111" /></mesh>
+          <mesh castShadow position={[obj.size[0] * 0.25, obj.size[1] * 0.52, 0]}><cylinderGeometry args={[0.12, 0.12, 0.02, 16]} /><meshStandardMaterial color="#111" /></mesh>
+        </group>
+      );
     case "gate":
     default:
       return <mesh {...common}><boxGeometry args={obj.size} /><Mat obj={obj} selected={selected} /></mesh>;
@@ -312,6 +377,62 @@ function TransformGizmo() {
   );
 }
 
+function WeatherFx() {
+  const w = useScene((s) => s.settings.weather);
+  const ref = useRef<THREE.Points>(null);
+  const count = w === "none" ? 0 : 1200;
+  const positions = useMemo(() => {
+    const arr = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) {
+      arr[i * 3] = (Math.random() - 0.5) * 80;
+      arr[i * 3 + 1] = Math.random() * 30;
+      arr[i * 3 + 2] = (Math.random() - 0.5) * 80;
+    }
+    return arr;
+  }, [count]);
+  useFrame((_, dt) => {
+    if (!ref.current || w === "none") return;
+    const pos = (ref.current.geometry.attributes.position as THREE.BufferAttribute).array as Float32Array;
+    const fall = w === "rain" ? 30 : 4;
+    const drift = w === "snow" ? 1.5 : 0.2;
+    for (let i = 0; i < pos.length; i += 3) {
+      pos[i + 1] -= fall * dt;
+      pos[i] += (Math.sin(pos[i + 1] * 0.5 + i) * drift) * dt;
+      if (pos[i + 1] < 0) pos[i + 1] = 30;
+    }
+    (ref.current.geometry.attributes.position as THREE.BufferAttribute).needsUpdate = true;
+  });
+  if (w === "none") return null;
+  return (
+    <Points ref={ref} positions={positions} stride={3} frustumCulled={false}>
+      <PointMaterial transparent color={w === "snow" ? "#ffffff" : "#9cc4ff"} size={w === "snow" ? 0.12 : 0.06} sizeAttenuation depthWrite={false} />
+    </Points>
+  );
+}
+
+function WalkController() {
+  const { camera } = useThree();
+  const keys = useRef<Record<string, boolean>>({});
+  useEffect(() => {
+    const d = (e: KeyboardEvent) => { keys.current[e.key.toLowerCase()] = true; };
+    const u = (e: KeyboardEvent) => { keys.current[e.key.toLowerCase()] = false; };
+    window.addEventListener("keydown", d); window.addEventListener("keyup", u);
+    camera.position.set(6, 1.7, 8);
+    return () => { window.removeEventListener("keydown", d); window.removeEventListener("keyup", u); };
+  }, [camera]);
+  useFrame((_, dt) => {
+    const speed = (keys.current["shift"] ? 8 : 4) * dt;
+    const fwd = new THREE.Vector3(); camera.getWorldDirection(fwd); fwd.y = 0; fwd.normalize();
+    const right = new THREE.Vector3().crossVectors(fwd, new THREE.Vector3(0, 1, 0));
+    if (keys.current["w"] || keys.current["arrowup"]) camera.position.addScaledVector(fwd, speed);
+    if (keys.current["s"] || keys.current["arrowdown"]) camera.position.addScaledVector(fwd, -speed);
+    if (keys.current["a"] || keys.current["arrowleft"]) camera.position.addScaledVector(right, -speed);
+    if (keys.current["d"] || keys.current["arrowright"]) camera.position.addScaledVector(right, speed);
+    camera.position.y = 1.7;
+  });
+  return <PointerLockControls />;
+}
+
 export function Scene3D() {
   const objects = useScene((s) => s.objects);
   const selectedId = useScene((s) => s.selectedId);
@@ -324,27 +445,36 @@ export function Scene3D() {
       shadows
       onPointerMissed={() => select(null)}
       style={{ background: settings.viewMode === "top" ? "#0e1a2b" : "linear-gradient(180deg,#0e1a2b 0%,#1b2a44 100%)" }}
-      gl={{ preserveDrawingBuffer: true }}
+      gl={{ preserveDrawingBuffer: true, antialias: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.05 }}
+      dpr={[1, 2]}
     >
-      <CameraSwitcher />
+      {settings.hq && <SoftShadows size={28} samples={12} focus={0.5} />}
+      {!settings.walkMode && <CameraSwitcher />}
+      {settings.walkMode && <PerspectiveCamera makeDefault position={[6, 1.7, 8]} fov={70} />}
       {settings.viewMode !== "top" && <SkyRig />}
       <SunLight />
       <FogRig />
       <ScreenshotRig />
+      <WeatherFx />
       {settings.viewMode !== "top" && <Environment preset="city" />}
-      {settings.showGrid && (
+      {settings.showGrid && !settings.walkMode && (
         <Grid args={[80, 80]} cellSize={1} cellThickness={0.5} cellColor="#3a5278" sectionSize={5} sectionThickness={1} sectionColor="#f5b441" fadeDistance={80} infiniteGrid position={[0, 0.01, 0]} />
       )}
       <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.001, 0]}>
         <planeGeometry args={[300, 300]} />
         <meshStandardMaterial color={settings.groundColor} roughness={1} />
       </mesh>
+      {settings.hq && <ContactShadows position={[0, 0.01, 0]} opacity={0.55} scale={80} blur={2.4} far={20} resolution={1024} color="#000" />}
       {objects.map((o) => (
         <ObjectMesh key={o.id} obj={o} selected={o.id === selectedId} onClick={() => select(o.id)} />
       ))}
-      {settings.showDimensions && selected && <DimensionsLabel obj={selected} />}
-      <TransformGizmo />
-      <OrbitControls makeDefault enableDamping dampingFactor={0.08} minDistance={2} maxDistance={120} maxPolarAngle={settings.viewMode === "top" ? 0.001 : Math.PI / 2 - 0.02} />
+      {settings.showDimensions && selected && !settings.walkMode && <DimensionsLabel obj={selected} />}
+      {!settings.walkMode && <TransformGizmo />}
+      {settings.walkMode ? (
+        <WalkController />
+      ) : (
+        <OrbitControls makeDefault enableDamping dampingFactor={0.08} minDistance={2} maxDistance={120} maxPolarAngle={settings.viewMode === "top" ? 0.001 : Math.PI / 2 - 0.02} />
+      )}
     </Canvas>
   );
 }
