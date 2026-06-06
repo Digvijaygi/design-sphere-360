@@ -187,11 +187,72 @@ function ObjectMesh({ obj, selected, onClick }: { obj: SceneObject; selected: bo
       );
     case "solar":
       return <mesh {...common} rotation={[-Math.PI / 8, obj.rotationY, 0]}><boxGeometry args={obj.size} /><meshStandardMaterial color={obj.color} metalness={0.7} roughness={0.2} /></mesh>;
-    case "kitchen":
+    case "door":
+      return (
+        <group {...common}>
+          <mesh castShadow><boxGeometry args={obj.size} /><Mat obj={obj} selected={selected} /></mesh>
+          <mesh position={[obj.size[0] * 0.35, 0, obj.size[2] / 2 + 0.02]} castShadow>
+            <sphereGeometry args={[0.06, 14, 14]} />
+            <meshStandardMaterial color="#d4af37" metalness={0.95} roughness={0.15} />
+          </mesh>
+        </group>
+      );
+    case "window":
+      return (
+        <group {...common}>
+          <mesh castShadow><boxGeometry args={[obj.size[0], obj.size[1], obj.size[2] * 0.6]} /><meshStandardMaterial color="#2a1a10" roughness={0.8} /></mesh>
+          <mesh>
+            <boxGeometry args={[obj.size[0] * 0.9, obj.size[1] * 0.9, obj.size[2] * 1.05]} />
+            <meshPhysicalMaterial color={obj.color} transmission={0.9} transparent opacity={0.55} roughness={0.05} metalness={0.1} thickness={0.05} ior={1.45} />
+          </mesh>
+          <mesh><boxGeometry args={[obj.size[0] * 0.95, 0.04, obj.size[2] * 1.06]} /><meshStandardMaterial color="#2a1a10" /></mesh>
+          <mesh><boxGeometry args={[0.04, obj.size[1] * 0.95, obj.size[2] * 1.06]} /><meshStandardMaterial color="#2a1a10" /></mesh>
+        </group>
+      );
+    case "sofa": {
+      const w = obj.size[0], h = obj.size[1], d = obj.size[2];
+      return (
+        <group {...common}>
+          <mesh castShadow position={[0, -h * 0.15, 0]}><boxGeometry args={[w, h * 0.5, d]} /><Mat obj={obj} selected={selected} /></mesh>
+          <mesh castShadow position={[0, h * 0.2, -d * 0.35]}><boxGeometry args={[w, h * 0.6, d * 0.3]} /><Mat obj={obj} selected={selected} /></mesh>
+          <mesh castShadow position={[-w * 0.45, h * 0.05, 0]}><boxGeometry args={[w * 0.1, h * 0.5, d]} /><Mat obj={obj} selected={selected} /></mesh>
+          <mesh castShadow position={[w * 0.45, h * 0.05, 0]}><boxGeometry args={[w * 0.1, h * 0.5, d]} /><Mat obj={obj} selected={selected} /></mesh>
+          <mesh castShadow position={[-w * 0.22, h * 0.15, d * 0.1]}><boxGeometry args={[w * 0.35, h * 0.15, d * 0.7]} /><meshStandardMaterial color={obj.color} roughness={0.85} /></mesh>
+          <mesh castShadow position={[w * 0.22, h * 0.15, d * 0.1]}><boxGeometry args={[w * 0.35, h * 0.15, d * 0.7]} /><meshStandardMaterial color={obj.color} roughness={0.85} /></mesh>
+        </group>
+      );
+    }
     case "bathtub":
+      return (
+        <group {...common}>
+          <mesh castShadow><boxGeometry args={obj.size} /><meshPhysicalMaterial color={obj.color} roughness={0.1} metalness={0.05} clearcoat={1} /></mesh>
+          <mesh position={[0, obj.size[1] * 0.1, 0]}><boxGeometry args={[obj.size[0] * 0.88, obj.size[1] * 0.7, obj.size[2] * 0.88]} /><meshStandardMaterial color="#7ec8e3" transparent opacity={0.55} /></mesh>
+        </group>
+      );
     case "sink":
+      return (
+        <group {...common}>
+          <mesh castShadow position={[0, -obj.size[1] * 0.2, 0]}><boxGeometry args={[obj.size[0], obj.size[1] * 0.6, obj.size[2]]} /><meshStandardMaterial color="#cfcfcf" /></mesh>
+          <mesh castShadow position={[0, obj.size[1] * 0.15, 0]}><boxGeometry args={[obj.size[0] * 0.95, obj.size[1] * 0.25, obj.size[2] * 0.95]} /><meshPhysicalMaterial color={obj.color} roughness={0.1} clearcoat={1} /></mesh>
+          <mesh castShadow position={[0, obj.size[1] * 0.4, -obj.size[2] * 0.3]}><cylinderGeometry args={[0.04, 0.04, obj.size[1] * 0.4, 10]} /><meshStandardMaterial color="#cfcfcf" metalness={0.9} roughness={0.15} /></mesh>
+        </group>
+      );
     case "toilet":
-    case "sofa":
+      return (
+        <group {...common}>
+          <mesh castShadow position={[0, -obj.size[1] * 0.15, 0]}><boxGeometry args={[obj.size[0], obj.size[1] * 0.55, obj.size[2] * 0.95]} /><meshPhysicalMaterial color={obj.color} roughness={0.1} clearcoat={1} /></mesh>
+          <mesh castShadow position={[0, obj.size[1] * 0.25, -obj.size[2] * 0.25]}><boxGeometry args={[obj.size[0] * 0.95, obj.size[1] * 0.45, obj.size[2] * 0.45]} /><meshPhysicalMaterial color={obj.color} roughness={0.1} clearcoat={1} /></mesh>
+        </group>
+      );
+    case "kitchen":
+      return (
+        <group {...common}>
+          <mesh castShadow position={[0, -obj.size[1] * 0.05, 0]}><boxGeometry args={[obj.size[0], obj.size[1] * 0.9, obj.size[2]]} /><Mat obj={obj} selected={selected} /></mesh>
+          <mesh castShadow position={[0, obj.size[1] * 0.45, 0]}><boxGeometry args={[obj.size[0] * 1.02, obj.size[1] * 0.1, obj.size[2] * 1.05]} /><meshStandardMaterial color="#222" roughness={0.3} metalness={0.4} /></mesh>
+          <mesh castShadow position={[-obj.size[0] * 0.25, obj.size[1] * 0.52, 0]}><cylinderGeometry args={[0.12, 0.12, 0.02, 16]} /><meshStandardMaterial color="#111" /></mesh>
+          <mesh castShadow position={[obj.size[0] * 0.25, obj.size[1] * 0.52, 0]}><cylinderGeometry args={[0.12, 0.12, 0.02, 16]} /><meshStandardMaterial color="#111" /></mesh>
+        </group>
+      );
     case "gate":
     default:
       return <mesh {...common}><boxGeometry args={obj.size} /><Mat obj={obj} selected={selected} /></mesh>;
