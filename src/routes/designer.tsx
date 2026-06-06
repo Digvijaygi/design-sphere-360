@@ -131,8 +131,9 @@ function DesignerPage() {
           )}
 
           <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-background/70 backdrop-blur px-3 py-1.5 rounded-md text-xs border border-border pointer-events-none">
-            360° Orbit View
+            {useScene.getState().settings.walkMode ? "🚶 Walk Mode · click to lock · WASD / Shift to sprint" : "360° Orbit View"}
           </div>
+
 
           <GizmoOverlay />
           <ViewportTools />
