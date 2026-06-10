@@ -12,4 +12,9 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  nitro: {
+    // Force-enable Nitro deploy plugin (required outside Lovable sandbox).
+    // On Vercel, NITRO_PRESET=vercel env var makes Nitro emit to .vercel/output.
+    preset: process.env.NITRO_PRESET ?? "node-server",
+  },
 });
