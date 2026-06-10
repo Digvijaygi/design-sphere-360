@@ -14,7 +14,9 @@ const dist = join(root, "dist");
 const out = join(root, ".vercel", "output");
 
 console.log("[vercel-build] Building with NITRO_PRESET=vercel...");
-execSync("vite build", { stdio: "inherit", env: { ...process.env, NITRO_PRESET: "vercel" } });
+const viteBin = join(root, "node_modules", ".bin", "vite");
+const viteCmd = existsSync(viteBin) ? `"${viteBin}" build` : "npx vite build";
+execSync(viteCmd, { stdio: "inherit", env: { ...process.env, NITRO_PRESET: "vercel" } });
 
 if (!existsSync(dist)) {
   console.error("[vercel-build] dist/ missing after build");
